@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Ask a question or start a discussion
+    url: https://github.com/orgs/squad-overpowered/discussions
+    about: For general questions, ideas, or design discussions — not for bugs or feature requests.
+
+  - name: Security vulnerability
+    url: https://github.com/squad-overpowered/.github/blob/main/SECURITY.md
+    about: Do NOT report security issues here. Read the security policy first.
+
+  - name: Contributing guide
+    url: https://github.com/squad-overpowered/.github/blob/main/CONTRIBUTING.md
+    about: First time contributing? Read this before opening an issue.
