@@ -1,0 +1,79 @@
+version: 2
+
+updates:
+  # npm dependencies for the Nx monorepo
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    groups:
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+        update-types:
+          - "minor"
+          - "patch"
+      nx:
+        patterns:
+          - "nx"
+          - "@nx/*"
+        update-types:
+          - "minor"
+          - "patch"
+      nestjs:
+        patterns:
+          - "@nestjs/*"
+        update-types:
+          - "minor"
+          - "patch"
+      testing:
+        patterns:
+          - "jest*"
+          - "@jest/*"
+          - "@testing-library/*"
+          - "playwright"
+          - "@playwright/*"
+        update-types:
+          - "minor"
+          - "patch"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "daisyui"
+          - "@tailwindcss/*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    ignore:
+      # Stay on Tailwind v3 — v4 breaks PostCSS plugin API
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+      # Angular major versions require manual migration
+      - dependency-name: "@angular/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "nx"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@nx/*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
+    commit-message:
+      prefix: "ci"
