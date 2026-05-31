@@ -1,0 +1,77 @@
+name: Feature Request
+description: Propose a new feature or enhancement
+title: "feat: "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to propose new features. A good feature request explains the **problem** and the **desired outcome**, not just the solution.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the app does this feature belong to?
+      options:
+        - Frontend (Angular)
+        - Backend (NestJS / API)
+        - Squad Builder
+        - Player Search
+        - Formations
+        - Authentication / User management
+        - Performance
+        - Design System / UI
+        - DevOps / Infrastructure
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem does this feature solve? Who is affected?
+      placeholder: "As a user, I want to... so that I can..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the feature and how it should work.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How will we know this feature is done? List verifiable conditions.
+      placeholder: |
+        - [ ] User can...
+        - [ ] System validates...
+        - [ ] API returns...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you consider and why did you reject them?
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Low — nice to have
+        - Medium — important but not urgent
+        - High — blocks users or key workflows
+        - Critical — must be in next release
+    validations:
+      required: true

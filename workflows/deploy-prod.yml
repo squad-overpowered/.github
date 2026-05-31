@@ -1,0 +1,110 @@
+name: Deploy — Production
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false  # Never cancel in-flight production deploys
+
+env:
+  NODE_VERSION: '24.x'
+
+jobs:
+  build:
+    name: Build for production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npx nx build frontend --configuration=production
+        env:
+          NODE_ENV: production
+
+      - name: Build backend
+        run: npx nx build backend --configuration=production
+        env:
+          NODE_ENV: production
+
+      - name: Upload frontend dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-production
+          path: dist/apps/frontend/
+          retention-days: 7
+
+      - name: Upload backend dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-production
+          path: dist/apps/backend/
+          retention-days: 7
+
+  deploy-frontend:
+    name: Deploy Frontend → Production
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production  # Requires manual approval if configured
+
+    steps:
+      - name: Download frontend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-production
+          path: dist/frontend
+
+      # Replace with your actual deployment step
+      - name: Deploy frontend
+        run: echo "Deploy dist/frontend to production environment"
+        env:
+          DEPLOY_TOKEN: ${{ secrets.PROD_DEPLOY_TOKEN }}
+
+  deploy-backend:
+    name: Deploy Backend → Production
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Download backend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-production
+          path: dist/backend
+
+      # Replace with your actual deployment step
+      - name: Deploy backend
+        run: echo "Deploy dist/backend to production environment"
+        env:
+          DEPLOY_TOKEN: ${{ secrets.PROD_DEPLOY_TOKEN }}
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
+
+  notify:
+    name: Notify deployment
+    needs: [deploy-frontend, deploy-backend]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Deployment summary
+        run: |
+          echo "## Production Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Actor: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ needs.deploy-frontend.result }} / ${{ needs.deploy-backend.result }}" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,108 @@
+name: Deploy — Staging
+
+on:
+  push:
+    branches: [develop]
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24.x'
+
+jobs:
+  build:
+    name: Build for staging
+    runs-on: ubuntu-latest
+    outputs:
+      frontend-affected: ${{ steps.check.outputs.frontend }}
+      backend-affected: ${{ steps.check.outputs.backend }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Derive SHAs for Nx affected
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Check affected projects
+        id: check
+        run: |
+          AFFECTED=$(npx nx show projects --affected --json 2>/dev/null || echo "[]")
+          echo "frontend=$(echo $AFFECTED | grep -q 'frontend' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "backend=$(echo $AFFECTED | grep -q 'backend' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
+      - name: Build frontend
+        run: npx nx build frontend --configuration=staging
+        env:
+          NODE_ENV: staging
+
+      - name: Build backend
+        run: npx nx build backend --configuration=staging
+        env:
+          NODE_ENV: staging
+
+      - name: Upload frontend dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-staging
+          path: dist/apps/frontend/
+          retention-days: 1
+
+      - name: Upload backend dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-staging
+          path: dist/apps/backend/
+          retention-days: 1
+
+  deploy-frontend:
+    name: Deploy Frontend → Staging
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Download frontend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-staging
+          path: dist/frontend
+
+      # Replace with your actual deployment step (Vercel, Netlify, S3, etc.)
+      - name: Deploy frontend
+        run: echo "Deploy dist/frontend to staging environment"
+        env:
+          DEPLOY_TOKEN: ${{ secrets.STAGING_DEPLOY_TOKEN }}
+
+  deploy-backend:
+    name: Deploy Backend → Staging
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Download backend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-staging
+          path: dist/backend
+
+      # Replace with your actual deployment step (Railway, Render, ECS, etc.)
+      - name: Deploy backend
+        run: echo "Deploy dist/backend to staging environment"
+        env:
+          DEPLOY_TOKEN: ${{ secrets.STAGING_DEPLOY_TOKEN }}
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
