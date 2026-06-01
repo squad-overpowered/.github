@@ -1,0 +1,5 @@
+﻿# Internal tooling — kept in the private monorepo (squad-overpowered/.github/)
+agents/
+prompts/
+copilot-instructions.md
+CODEOWNERS
