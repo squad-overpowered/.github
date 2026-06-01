@@ -82,6 +82,20 @@ Knows: Nx affected commands, multi-stage Docker builds, GitHub Actions for monor
 
 ---
 
+### `@Mobile Dev`
+**When to use**: Creating or modifying Flutter screens, BLoC state management, go_router navigation, dio HTTP calls, or any code inside `squad-overpowered-app`.
+
+Knows: Flutter 3, Dart 3, flutter_bloc patterns, go_router, dio interceptors, platform-specific configurations, responsive layouts for mobile.
+
+---
+
+### `@Docs`
+**When to use**: Creating or updating documentation in the Obsidian vault (`squad-overpowered-context`), writing ADRs, documenting API endpoints, entities, features, or Flutter screens.
+
+Knows: Vault structure, all templates (feature, ADR, API endpoint, entity, screen), Obsidian link conventions, frontmatter format.
+
+---
+
 ## Prompts
 
 Prompts are reusable task templates. Type `/` in Copilot Chat to access them.
