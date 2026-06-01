@@ -142,6 +142,26 @@ Review code changes for correctness, security (OWASP Top 10), Angular/NestJS con
 
 ---
 
+### `/commit`
+Inspect all staged and unstaged changes, decide whether to make a single commit or split into multiple atomic commits by concern, and execute them following Conventional Commits. Supports short aliases for commit types.
+
+| Alias | Type | When to use |
+|-------|------|-------------|
+| `f` | `feat` | New feature |
+| `x` | `fix` | Bug fix |
+| `d` | `docs` | Documentation only |
+| `b` | `build` | Dependencies, config |
+| `c` | `chore` | Tooling, maintenance |
+| `r` | `refactor` | Code restructure |
+| `t` | `test` | Tests |
+| `wip` / *(empty)* | *(auto)* | Split automatically by concern |
+
+**Usage**: `/commit feat` · `/commit fix` · `/commit b` · `/commit` ← auto-detect
+
+**Usage**: `/review-code apps/backend/src/modules/auth/`
+
+---
+
 ## Recommended Workflow
 
 ```
