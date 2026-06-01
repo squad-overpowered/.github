@@ -1,0 +1,30 @@
+name: Sync Labels
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'labels.yml'
+  workflow_dispatch:  # Allow manual sync at any time
+
+permissions:
+  issues: write
+
+jobs:
+  sync:
+    name: Sync labels to repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync labels
+        uses: EndBug/label-sync@v2
+        with:
+          config-file: labels.yml
+          # Delete labels that are in the repo but not in labels.yml
+          delete-other-labels: false
+          # Dry-run on PRs, apply on push to main
+          dry-run: false
+          token: ${{ secrets.GITHUB_TOKEN }}

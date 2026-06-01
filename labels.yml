@@ -1,0 +1,144 @@
+# Labels for the Squad Overpowered organization
+# Synced automatically by workflows/sync-labels.yml
+# Format: name, color (hex without #), description
+
+# ── Type ────────────────────────────────────────────────────────────────────
+- name: "bug"
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: "enhancement"
+  color: "a2eeef"
+  description: "New feature or request"
+
+- name: "documentation"
+  color: "0075ca"
+  description: "Improvements or additions to documentation"
+
+- name: "refactor"
+  color: "e4e669"
+  description: "Code change that neither fixes a bug nor adds a feature"
+
+- name: "performance"
+  color: "f9d0c4"
+  description: "Code change that improves performance"
+
+- name: "security"
+  color: "e11d48"
+  description: "Security vulnerability or hardening"
+
+- name: "test"
+  color: "bfd4f2"
+  description: "Adding or updating tests"
+
+- name: "build"
+  color: "c5def5"
+  description: "Build system or dependency changes"
+
+- name: "ci"
+  color: "84b6eb"
+  description: "CI/CD configuration changes"
+
+# ── Status ───────────────────────────────────────────────────────────────────
+- name: "needs-triage"
+  color: "e4e669"
+  description: "Needs initial review and prioritization"
+
+- name: "in-progress"
+  color: "0052cc"
+  description: "Actively being worked on"
+
+- name: "blocked"
+  color: "b60205"
+  description: "Blocked by another issue or external dependency"
+
+- name: "needs-design"
+  color: "d93f0b"
+  description: "Requires design decision before implementation"
+
+- name: "needs-info"
+  color: "d876e3"
+  description: "More information needed from the reporter"
+
+- name: "stale"
+  color: "ededed"
+  description: "No activity for an extended period"
+
+- name: "wont-fix"
+  color: "ffffff"
+  description: "Will not be worked on"
+
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "This issue or pull request already exists"
+
+- name: "pinned"
+  color: "0075ca"
+  description: "Pinned — exempt from stale bot"
+
+- name: "do-not-merge"
+  color: "b60205"
+  description: "PR should not be merged yet"
+
+- name: "work-in-progress"
+  color: "fbca04"
+  description: "PR is still being worked on"
+
+# ── Area ─────────────────────────────────────────────────────────────────────
+- name: "area: frontend"
+  color: "c2e0c6"
+  description: "Affects the Angular frontend (apps/frontend)"
+
+- name: "area: backend"
+  color: "fef2c0"
+  description: "Affects the NestJS backend (apps/backend)"
+
+- name: "area: shared-libs"
+  color: "f9d0c4"
+  description: "Affects shared libraries (libs/)"
+
+- name: "area: devops"
+  color: "d4c5f9"
+  description: "Affects infrastructure, CI/CD, Docker, deployments"
+
+- name: "area: design-system"
+  color: "bfd4f2"
+  description: "Affects the vibeSquad design system or UI components"
+
+- name: "area: auth"
+  color: "ffd700"
+  description: "Affects authentication or authorization"
+
+# ── Automation ───────────────────────────────────────────────────────────────
+- name: "automated"
+  color: "ededed"
+  description: "Created or managed by a GitHub Actions workflow"
+
+- name: "dependencies"
+  color: "0075ca"
+  description: "Dependency update (npm, github-actions)"
+
+- name: "security-audit"
+  color: "e11d48"
+  description: "Created by the weekly dependency audit workflow"
+
+- name: "github-actions"
+  color: "84b6eb"
+  description: "GitHub Actions dependency update"
+
+# ── Priority ─────────────────────────────────────────────────────────────────
+- name: "priority: critical"
+  color: "b60205"
+  description: "Must be fixed immediately — blocks users or production"
+
+- name: "priority: high"
+  color: "d93f0b"
+  description: "Important — should be addressed in the current sprint"
+
+- name: "priority: medium"
+  color: "e4e669"
+  description: "Normal priority — address when possible"
+
+- name: "priority: low"
+  color: "c5def5"
+  description: "Nice to have — low urgency"

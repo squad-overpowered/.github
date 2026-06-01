@@ -1,0 +1,181 @@
+name: Bundle Size Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/frontend/**'
+      - 'libs/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+concurrency:
+  group: bundle-size-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  NODE_VERSION: '24.x'
+
+jobs:
+  bundle-size:
+    name: Compare bundle size
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Build PR branch ──────────────────────────────────────────────────
+      - name: Build frontend (PR)
+        run: npx nx build frontend --configuration=production
+
+      - name: Measure PR bundle size
+        id: pr-size
+        run: |
+          # Sum all JS files in the output directory (main bundles)
+          DIST_DIR="dist/apps/frontend/browser"
+          if [ ! -d "$DIST_DIR" ]; then
+            DIST_DIR="dist/apps/frontend"
+          fi
+
+          TOTAL_BYTES=$(find "$DIST_DIR" -name "*.js" -not -name "*.map" | xargs wc -c 2>/dev/null | tail -1 | awk '{print $1}')
+          MAIN_BYTES=$(find "$DIST_DIR" -name "main*.js" -not -name "*.map" | xargs wc -c 2>/dev/null | tail -1 | awk '{print $1}' || echo "0")
+          CHUNK_COUNT=$(find "$DIST_DIR" -name "chunk-*.js" -not -name "*.map" | wc -l)
+
+          echo "total_bytes=${TOTAL_BYTES:-0}" >> $GITHUB_OUTPUT
+          echo "main_bytes=${MAIN_BYTES:-0}" >> $GITHUB_OUTPUT
+          echo "chunk_count=${CHUNK_COUNT:-0}" >> $GITHUB_OUTPUT
+
+          echo "PR total JS: ${TOTAL_BYTES} bytes"
+          echo "PR main bundle: ${MAIN_BYTES} bytes"
+          echo "PR chunk count: ${CHUNK_COUNT}"
+
+      # ── Build base branch ────────────────────────────────────────────────
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base-branch
+
+      - name: Install base dependencies
+        run: npm ci
+        working-directory: base-branch
+
+      - name: Build frontend (base)
+        run: npx nx build frontend --configuration=production
+        working-directory: base-branch
+
+      - name: Measure base bundle size
+        id: base-size
+        run: |
+          DIST_DIR="base-branch/dist/apps/frontend/browser"
+          if [ ! -d "$DIST_DIR" ]; then
+            DIST_DIR="base-branch/dist/apps/frontend"
+          fi
+
+          TOTAL_BYTES=$(find "$DIST_DIR" -name "*.js" -not -name "*.map" | xargs wc -c 2>/dev/null | tail -1 | awk '{print $1}')
+          MAIN_BYTES=$(find "$DIST_DIR" -name "main*.js" -not -name "*.map" | xargs wc -c 2>/dev/null | tail -1 | awk '{print $1}' || echo "0")
+          CHUNK_COUNT=$(find "$DIST_DIR" -name "chunk-*.js" -not -name "*.map" | wc -l)
+
+          echo "total_bytes=${TOTAL_BYTES:-0}" >> $GITHUB_OUTPUT
+          echo "main_bytes=${MAIN_BYTES:-0}" >> $GITHUB_OUTPUT
+          echo "chunk_count=${CHUNK_COUNT:-0}" >> $GITHUB_OUTPUT
+
+          echo "Base total JS: ${TOTAL_BYTES} bytes"
+          echo "Base main bundle: ${MAIN_BYTES} bytes"
+
+      # ── Compute diff and post comment ────────────────────────────────────
+      - name: Compute diff and post PR comment
+        uses: actions/github-script@v7
+        env:
+          PR_TOTAL: ${{ steps.pr-size.outputs.total_bytes }}
+          BASE_TOTAL: ${{ steps.base-size.outputs.total_bytes }}
+          PR_MAIN: ${{ steps.pr-size.outputs.main_bytes }}
+          BASE_MAIN: ${{ steps.base-size.outputs.main_bytes }}
+          PR_CHUNKS: ${{ steps.pr-size.outputs.chunk_count }}
+          BASE_CHUNKS: ${{ steps.base-size.outputs.chunk_count }}
+        with:
+          script: |
+            const toKb = (bytes) => (parseInt(bytes) / 1024).toFixed(2);
+            const diff = (pr, base) => {
+              const delta = parseInt(pr) - parseInt(base);
+              const pct = base > 0 ? ((delta / parseInt(base)) * 100).toFixed(1) : '0';
+              const sign = delta >= 0 ? '+' : '';
+              const emoji = delta > 50 * 1024 ? '🔴' : delta > 10 * 1024 ? '🟡' : delta <= 0 ? '🟢' : '🟡';
+              return { delta, pct, sign, emoji, kb: toKb(Math.abs(delta)) };
+            };
+
+            const prTotal = parseInt(process.env.PR_TOTAL) || 0;
+            const baseTotal = parseInt(process.env.BASE_TOTAL) || 0;
+            const prMain = parseInt(process.env.PR_MAIN) || 0;
+            const baseMain = parseInt(process.env.BASE_MAIN) || 0;
+            const prChunks = parseInt(process.env.PR_CHUNKS) || 0;
+            const baseChunks = parseInt(process.env.BASE_CHUNKS) || 0;
+
+            const totalDiff = diff(prTotal, baseTotal);
+            const mainDiff = diff(prMain, baseMain);
+
+            const statusEmoji = totalDiff.delta > 100 * 1024 ? '🔴 **Regresión detectada**' :
+                                totalDiff.delta > 20 * 1024  ? '🟡 **Incremento moderado**' :
+                                totalDiff.delta <= 0          ? '🟢 **Sin regresión**' :
+                                                                '🟡 **Incremento menor**';
+
+            const body = `## 📦 Bundle Size Report — Frontend
+
+            ${statusEmoji}
+
+            | Métrica | Base (\`${{ github.base_ref }}\`) | PR | Diff |
+            |---------|---------|-----|------|
+            | **Total JS** | ${toKb(baseTotal)} kB | ${toKb(prTotal)} kB | ${totalDiff.emoji} ${totalDiff.sign}${totalDiff.kb} kB (${totalDiff.sign}${totalDiff.pct}%) |
+            | **Main bundle** | ${toKb(baseMain)} kB | ${toKb(prMain)} kB | ${mainDiff.emoji} ${mainDiff.sign}${mainDiff.kb} kB (${mainDiff.sign}${mainDiff.pct}%) |
+            | **Lazy chunks** | ${baseChunks} | ${prChunks} | ${prChunks - baseChunks >= 0 ? '+' : ''}${prChunks - baseChunks} |
+
+            > **Umbrales**: 🟢 ≤ 20 kB · 🟡 20–100 kB · 🔴 > 100 kB de incremento en JS total
+            >
+            > _Generado por [bundle-size.yml](.github/workflows/bundle-size.yml) · commit \`${{ github.sha }}\`_
+            `;
+
+            // Find existing bot comment to update instead of creating a new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Bundle Size Report — Frontend')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+            // Fail the check if there's a major regression (> 200 kB)
+            if (totalDiff.delta > 200 * 1024) {
+              core.setFailed(`Bundle size increased by ${totalDiff.kb} kB (${totalDiff.pct}%), exceeding the 200 kB threshold.`);
+            }
